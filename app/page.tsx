@@ -22,7 +22,7 @@ export default function Home() {
                 Ticketing App
               </h1>
               <p className="text-white/70 text-sm sm:text-base lg:text-lg px-2">
-                Smart event management powered by AI
+                Smart event management
               </p>
             </div>
             
