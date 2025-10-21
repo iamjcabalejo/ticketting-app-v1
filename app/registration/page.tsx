@@ -1,8 +1,8 @@
 import Link from "next/link";
-import QRScanner from '@/services/qr-scanner/component/qr-scanner';
+import { RegistrationForm } from "@/services/registration/component/registration-form";
 import { Button } from "@/components/ui/button";
 
-export default function Scanner() {
+export default function Registration() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 relative overflow-hidden">
       {/* Animated background elements */}
@@ -31,10 +31,10 @@ export default function Scanner() {
           <div className="w-16 sm:w-24"></div> {/* Spacer for centering */}
         </div>
         
-        {/* Scanner component */}
-        <div className="flex justify-center w-full px-2 sm:px-4">
-          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl w-full max-w-sm sm:max-w-lg lg:max-w-2xl">
-            <QRScanner />
+        {/* Registration form */}
+        <div className="flex justify-center">
+          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl max-w-sm sm:max-w-lg w-full mx-2 sm:mx-4">
+            <RegistrationForm />
           </div>
         </div>
         
