@@ -1,7 +1,18 @@
-import fs from 'fs';
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+/** Reads RESEND_FROM_EMAIL from .env (e.g. "Support <support@example.com>") */
+function getFromAddress(): string | null {
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  return from || null;
+}
+
+function getResendClient(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
+    return null;
+  }
+  return new Resend(apiKey);
+}
 
 export interface EmailData {
   firstName: string;
@@ -17,37 +28,64 @@ export interface EmailResult {
   error?: string;
 }
 
+/** Escape string for safe use in HTML text content / attributes */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 /**
  * Sends a registration confirmation email with QR code using Resend
  */
 export async function sendRegistrationEmail(data: EmailData): Promise<EmailResult> {
+  const resend = getResendClient();
+  if (!resend) {
+    console.error("RESEND_API_KEY is missing or empty");
+    return {
+      success: false,
+      error: "Email service is not configured (missing RESEND_API_KEY)",
+    };
+  }
+
+  const fromAddress = getFromAddress();
+  if (!fromAddress) {
+    console.error("RESEND_FROM_EMAIL is missing or empty in .env");
+    return {
+      success: false,
+      error: "Email service is not configured (missing RESEND_FROM_EMAIL in .env)",
+    };
+  }
+
   try {
-    
-    // Extract base64 content from data URL
-    const base64Content = data.qrCode.replace('data:image/png;base64,', '');
-    
-    // Generate HTML email template with CID reference
+    const base64Content = data.qrCode.startsWith("data:image/png;base64,")
+      ? data.qrCode.replace(/^data:image\/png;base64,/, "")
+      : data.qrCode;
+    const attachmentBuffer = Buffer.from(base64Content, "base64");
+
     const htmlEmail = generateHTMLEmailTemplateWithCID(data);
-    
+
     const { data: resendData, error } = await resend.emails.send({
-      from: "Event Registration <developers@dstsolutions.dev>",
+      from: fromAddress,
       to: [data.email],
       subject: "Event Registration Confirmation",
       html: htmlEmail,
       attachments: [
         {
-          content: base64Content,
-          filename: 'qr-code.png',
-          contentId: 'qr-code-image'
-        }
-      ]
+          content: attachmentBuffer,
+          filename: "qr-code.png",
+          contentId: "qr-code-image",
+        },
+      ],
     });
 
     if (error) {
-      console.error('Resend error:', error);
+      console.error("Resend error:", error);
       return {
         success: false,
-        error: 'Failed to send email',
+        error: error?.message ?? "Failed to send email",
       };
     }
 
@@ -56,15 +94,22 @@ export async function sendRegistrationEmail(data: EmailData): Promise<EmailResul
       messageId: resendData?.id,
     };
   } catch (error) {
-    console.error('Failed to send registration email:', error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Failed to send registration email:", message);
     return {
       success: false,
-      error: 'Network error while sending email',
+      error: "Network error while sending email",
     };
   }
 }
 
 function generateHTMLEmailTemplateWithCID(data: EmailData): string {
+  const firstName = escapeHtml(data.firstName);
+  const lastName = escapeHtml(data.lastName);
+  const email = escapeHtml(data.email);
+  const phone = escapeHtml(data.phone);
+  const fullName = `${firstName} ${lastName}`;
+
   return `
     <!DOCTYPE html>
     <html>
@@ -80,7 +125,7 @@ function generateHTMLEmailTemplateWithCID(data: EmailData): string {
         </h1>
         
         <p style="color: #374151; font-size: 16px; margin-bottom: 20px;">
-          Dear ${data.firstName} ${data.lastName},
+          Dear ${fullName},
         </p>
         
         <p style="color: #374151; font-size: 16px; margin-bottom: 30px;">
@@ -102,9 +147,9 @@ function generateHTMLEmailTemplateWithCID(data: EmailData): string {
           </p>
           
           <div style="background-color: white; padding: 15px; border-radius: 4px; border: 1px solid #d1d5db; font-size: 12px; color: #374151; text-align: left;">
-            <p><strong>Name:</strong> ${data.firstName} ${data.lastName}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>Phone:</strong> ${data.phone}</p>
+            <p><strong>Name:</strong> ${fullName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone}</p>
           </div>
         </div>
         
