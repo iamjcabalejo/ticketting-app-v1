@@ -17,6 +17,7 @@ export interface CreateRegistrationResult {
     id: string;
     qrCode: string;
   };
+  emailSent?: boolean;
   error?: string;
 }
 
@@ -76,6 +77,7 @@ export async function createRegistration(
         id: newAttendeeRegistration.id,
         qrCode: newAttendeeRegistration.qrCode!,
       },
+      emailSent: emailResult.success,
     };
   } catch (error) {
     console.error('Failed to create registration:', error);

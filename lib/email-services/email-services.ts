@@ -89,6 +89,10 @@ export async function sendRegistrationEmail(data: EmailData): Promise<EmailResul
       };
     }
 
+    console.log("Registration confirmation email sent successfully", {
+      to: data.email,
+      messageId: resendData?.id,
+    });
     return {
       success: true,
       messageId: resendData?.id,

@@ -31,6 +31,7 @@ export function RegistrationForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
   const [submitError, setSubmitError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
   const [qrCodeData, setQrCodeData] = useState<QRCodeData | null>(null);
 
   const form = useForm<RegistrationFormData>({
@@ -61,6 +62,7 @@ export function RegistrationForm() {
       
       if (result.success) {
         setSubmitMessage(result.message);
+        setEmailSent(result.emailSent ?? false);
         if (result.registrationData) {
           setQrCodeData(result.registrationData);
         }
@@ -90,6 +92,13 @@ export function RegistrationForm() {
   if (isSubmitted) {
     return (
       <div className="text-center space-y-4 sm:space-y-6">
+        {emailSent && (
+          <div className="p-3 sm:p-4 bg-green-500/20 border border-green-500/40 rounded-xl backdrop-blur-sm" role="status" aria-live="polite">
+            <p className="text-green-300 text-sm sm:text-base font-medium">
+              Confirmation email sent successfully. Please check your inbox.
+            </p>
+          </div>
+        )}
         <div className="space-y-3 sm:space-y-4">
           <h2 className="text-xl sm:text-2xl font-bold text-green-400">Registration Successful!</h2>
           <p className="text-white/70 text-sm sm:text-base lg:text-lg px-2">
@@ -116,6 +125,7 @@ export function RegistrationForm() {
             setIsSubmitted(false);
             setSubmitMessage("");
             setSubmitError("");
+            setEmailSent(false);
             setQrCodeData(null);
             form.reset();
           }}

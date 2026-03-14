@@ -18,6 +18,7 @@ export interface FormActionResult {
   success: boolean;
   message: string;
   qrCode?: string;
+  emailSent?: boolean;
   registrationData?: {
     firstName: string;
     lastName: string;
@@ -74,6 +75,7 @@ export async function submitRegistrationForm(
         success: true,
         message: 'Registration successful! Your QR code has been generated and sent to your email.',
         qrCode: result.data?.qrCode,
+        emailSent: result.emailSent,
         registrationData: validationResult.data,
       };
     } else {
